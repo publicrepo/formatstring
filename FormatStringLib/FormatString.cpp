@@ -1264,7 +1264,7 @@ static int fmtfp(char *buffer, size_t *currlen, size_t maxlen,
   // Decimal point.  This should probably use locale to find the correct
   // char to print out.
   //
-  if (max > 0)
+  if( (max > 0) && (fplace > 0) )
   {
     total += dopr_outch(buffer, currlen, maxlen, '.');
 
@@ -1513,7 +1513,7 @@ static int fmtfp64(char *buffer, size_t *currlen, size_t maxlen,
   // Decimal point.  This should probably use locale to find the correct
   // char to print out.
   //
-  if (max > 0)
+  if( (max > 0) && (fplace > 0) )
   {
     total += dopr_outch(buffer, currlen, maxlen, '.');
 
