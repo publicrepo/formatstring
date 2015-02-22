@@ -26,3 +26,6 @@ Change log:
 
 30 Nov 2013
 Fix FormatStringF handling %s when not passed string value type. #defined alternate code path to convert non string type. Current behavior is '#err#'.
+
+22 Feb 2014
+Fix %.2g incorrect output.
