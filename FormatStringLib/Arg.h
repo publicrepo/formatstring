@@ -280,7 +280,7 @@ public:
   
   fsBool IsCString() const
   {
-    return (m_type == ARG_TYPE_CSTR);
+    return (m_type == ARG_TYPE_CSTR) || (m_type == ARG_TYPE_CHAR_PTR); // Might be const or non-const char* 
   }
 
   // Is writable / output type
