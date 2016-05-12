@@ -585,7 +585,7 @@ static int fmtint_64(char *buffer, size_t *currlen, size_t maxlen,
     spadlen = 0;
   }
   if (flags & DP_F_MINUS) 
-    spadlen = -spadlen; // Left Justifty 
+    spadlen = -spadlen; // Left Justify 
 
 #ifdef DEBUG_SNPRINTF
   dprint (1, (debugfile, "zpad: %d, spad: %d, min: %d, max: %d, place: %d\n", zpadlen, spadlen, min, max, place));
@@ -691,7 +691,7 @@ static int fmtint(char *buffer, size_t *currlen, size_t maxlen,
     spadlen = 0;
   }
   if (flags & DP_F_MINUS) 
-    spadlen = -spadlen; // Left Justifty 
+    spadlen = -spadlen; // Left Justify 
 
 #ifdef DEBUG_SNPRINTF
   dprint (1, (debugfile, "zpad: %d, spad: %d, min: %d, max: %d, place: %d\n", zpadlen, spadlen, min, max, place));
@@ -1031,8 +1031,13 @@ static int fmtfp(char *buffer, size_t *currlen, size_t maxlen,
   if (fplace > 0) --fplace; // Rewind 1 char to remove the leading '1'
   fconvert[fplace] = 0;
 
-  //  -1 for decimal point, another -1 if we are printing a sign 
-  padlen = min - iplace - max - 1 - ((signvalue) ? 1 : 0); 
+  //  -1 for decimal point if there are any, another -1 if we are printing a sign
+  padlen = min - iplace - max;
+  if( (max > 0) && (fplace > 0) ) // decimal point
+    { padlen -= 1; }
+  if( signvalue ) // sign
+    { padlen -= 1; } 
+
 #if 1 // Configurable trailing zeros for general numbers
   if( a_allowTrailingZeros )
   {
@@ -1046,7 +1051,7 @@ static int fmtfp(char *buffer, size_t *currlen, size_t maxlen,
   if (padlen < 0) 
     padlen = 0;
   if (flags & DP_F_MINUS) 
-    padlen = -padlen; // Left Justifty 
+    padlen = -padlen; // Left Justify 
 
   if ((flags & DP_F_ZERO) && (padlen > 0)) 
   {
@@ -1280,8 +1285,13 @@ static int fmtfp64(char *buffer, size_t *currlen, size_t maxlen,
   if (fplace > 0) --fplace; // Rewind 1 char to remove the leading '1'
   fconvert[fplace] = 0;
 
-  //  -1 for decimal point, another -1 if we are printing a sign 
-  padlen = min - iplace - max - 1 - ((signvalue) ? 1 : 0); 
+  //  -1 for decimal point if there are any, another -1 if we are printing a sign
+  padlen = min - iplace - max;
+  if( (max > 0) && (fplace > 0) ) // decimal point
+    { padlen -= 1; }
+  if( signvalue ) // sign
+    { padlen -= 1; } 
+
 #if 1 // Configurable trailing zeros for general numbers
   if( a_allowTrailingZeros )
   {
@@ -1295,7 +1305,7 @@ static int fmtfp64(char *buffer, size_t *currlen, size_t maxlen,
   if (padlen < 0) 
     padlen = 0;
   if (flags & DP_F_MINUS) 
-    padlen = -padlen; // Left Justifty 
+    padlen = -padlen; // Left Justify 
 
   if ((flags & DP_F_ZERO) && (padlen > 0)) 
   {

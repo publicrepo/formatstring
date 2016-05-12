@@ -29,3 +29,6 @@ Fix FormatStringF handling %s when not passed string value type. #defined altern
 
 22 Feb 2014
 Fix %.2g incorrect output.
+
+12 May 2016
+Fix %2.0f incorrect padding with zero decimal places.
