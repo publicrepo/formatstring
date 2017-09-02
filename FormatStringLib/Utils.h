@@ -7,6 +7,7 @@
 //
 
 #include <assert.h>
+#include <math.h> // For log10
 #define FS_ASSERT(exp) assert(exp)
 
 
@@ -96,12 +97,46 @@ class Utils
 public:
 
   // Copy string into limited size buffer. (Will copy as much of source as possible)
-  static void StrLib_Copy(fsChar* a_dest, const fsChar* a_source, fsInt a_destMaxBytes);
+  static void StrLib_Copy(fsChar* a_dest, const fsChar* a_source, fsInt a_destMaxBytes)
+  {
+    FS_ASSERT(a_dest);
+    FS_ASSERT(a_source);
+    FS_ASSERT(a_destMaxBytes > 0);
+
+    fsChar* curDstPtr = a_dest;
+    const fsChar* curSrcPtr = a_source;
+    while( *curSrcPtr && (a_destMaxBytes > 1) )
+    {
+      *curDstPtr = *curSrcPtr;
+      ++curSrcPtr;
+      ++curDstPtr;
+      --a_destMaxBytes;
+    }
+    *curDstPtr = 0; // Terminating zero
+  }
+
 
   // Caculate Log from any base.
   // Uses base conversion formula:  Log a(b) / Log a(c) = Log c(b)
-  static fsFloat32 Math_LogAnyBase(fsFloat32 a_base, fsFloat32 a_value);
-  static fsFloat64 Math_LogAnyBase(fsFloat64 a_base, fsFloat64 a_value);
+  template< typename Real >
+  static Real Math_LogAnyBase(Real a_base, Real a_value)
+  {
+    return (log10(a_value) / log10(a_base));
+  }
+
+  // \brief Round toward zero.
+  template< typename Real >
+  static Real Math_RoundZero(Real a_num)
+  {
+    if(a_num < 0)
+    {
+      return (-floor(-a_num));
+    }
+    else
+    {
+      return (floor(a_num));
+    }
+  }
 
 };
 

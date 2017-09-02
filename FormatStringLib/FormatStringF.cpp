@@ -10,8 +10,9 @@
 // basic support for %g and %e formats
 // basic support for float exception formats (Ind, Inf, Nan) with signs.
 // fixed critical bug where leading zeros in fraction part of float were lost (eg. 1.002 became 1.2)
+// experimental support for ',' separator
 //
-// NOTE: Still missing ',' modifier, newer multi byte modifiers like 'llu' (long long unsigned decimal).
+// NOTE: Still missing newer multi byte modifiers like 'llu' (long long unsigned decimal).
 //       Note that the new type extensions are unnecessary as types are auto detected.
 //       Does not support the $ parameter index format as per printf_p or posix extension
 //
@@ -131,7 +132,7 @@ static int fmtfp_exception(char *buffer, size_t *currlen, size_t maxlen, LDOUBLE
 #define DP_F_ZERO     (1 << 4)                    // Leading zeros
 #define DP_F_UP       (1 << 5)                    // Upper case letters in numeric strings eg. #INF instead of #inf
 #define DP_F_UNSIGNED (1 << 6)                    // Numeric parameter value is unsigned
-#define DP_F_SEPARATORS (1 << 7)                  // EXTENSION: decimal seperators (eg. 23,456.34)
+#define DP_F_SEPARATORS (1 << 7)                  // EXTENSION: decimal separators (eg. 23,456.34)
 
 // Conversion Flags 
 #define DP_C_SHORT   1
@@ -203,7 +204,11 @@ static int dopr(char *buffer, size_t maxlen, const char *format, ArgList& a_argL
         flags |= DP_F_ZERO;
         ch = *format++;
         break;
-      default:
+     case ',':
+        flags |= DP_F_SEPARATORS;
+        ch = *format++;
+        break;
+     default:
         state = DP_S_MIN;
         break;
       }
@@ -413,10 +418,6 @@ static int dopr(char *buffer, size_t maxlen, const char *format, ArgList& a_argL
         total += fmtstr(buffer, &currlen, maxlen, cstringPtr, flags, min, max);
         break;
       }
-/*
-        total += fmtstr(buffer, &currlen, maxlen, a_argList.GetNext().m_valueCString, flags, min, max);
-        break;
-*/
       case 'p':
 #if 1 //GD Just use maximum precision for type
         total += fmtint_64(buffer, &currlen, maxlen, (fsUIntPtr)(const char*)a_argList.GetNext().m_valueConstPtr, 16, min, max, flags);
@@ -863,12 +864,13 @@ static int fmtfp_gen(char *buffer, size_t *currlen, size_t maxlen, LDOUBLE fValu
   {
     total += fmtint_64(buffer, currlen, maxlen, (fsInt64)fValue, 10, min, 0, flags); // NOTE: Don't use max or we will zero pad
   }
-  else if( fValue < 0.0000 || fValue > 9999.9999) // Only in these ranges (note no zero issues here)
+  else if( abs(fValue) < 0.00001 || abs(fValue) > 9999.9999) // Only in these ranges (note no zero issues here)
   {
     // Quick and dirty hack to get some scientific style numbers
     fsFloat64 numAbs = abs(fValue);
     fsFloat64 numExp = Utils::Math_LogAnyBase(10.0, numAbs);
-    fsFloat64 numDiv = pow(10.0, floor(numExp));
+              numExp = Utils::Math_RoundZero(numExp); // Round down (toward zero, still signed)
+    fsFloat64 numDiv = pow(10.0, numExp);
     fsFloat64 numMant = fValue / numDiv;
             
     total += fmtfp(buffer, currlen, maxlen, numMant, 0, max, 0, false, false);                   // Mantissa (signed)
@@ -896,7 +898,8 @@ static int fmtfp_exp(char *buffer, size_t *currlen, size_t maxlen, LDOUBLE fValu
   {
     fsFloat64 numAbs = abs(fValue);
     fsFloat64 numExp = Utils::Math_LogAnyBase(10.0, numAbs);
-    fsFloat64 numDiv = pow(10.0, floor(numExp));
+              numExp = Utils::Math_RoundZero(numExp); // Round down (toward zero, still signed)
+    fsFloat64 numDiv = pow(10.0, numExp);
     fsFloat64 numMant = fValue / numDiv;
 
     total += fmtfp(buffer, currlen, maxlen, numMant, 0, max, 0);                   // Mantissa (signed)
@@ -1108,6 +1111,9 @@ static int fmtfp(char *buffer, size_t *currlen, size_t maxlen,
 
 static int fmtfp64_gen(char *buffer, size_t *currlen, size_t maxlen, LDOUBLE fValue, int min, int max, int flags, bool a_checkFPException)
 {
+  // NOTE: Although the current behavior is okay, the actual spec says 'g' should return the shorter representation of 'f' and 'e' formats.
+  //       I notice the behavior is different though eg. %.2f, %.2e, %.2g when value is eg. 3.0041.
+
   int total = 0;
 
   if( a_checkFPException && isfpexception(fValue) ) // Check for FP exception
@@ -1118,12 +1124,13 @@ static int fmtfp64_gen(char *buffer, size_t *currlen, size_t maxlen, LDOUBLE fVa
   {
     total += fmtint_64(buffer, currlen, maxlen, (fsInt64)fValue, 10, min, 0, flags); // NOTE: Don't use max or we will zero pad
   }
-  else if( fValue < 0.0000 || fValue > 9999.9999) // Only in these ranges (note no zero issues here)
+  else if( abs(fValue) < 0.00001 || abs(fValue) > 9999.9999) // Only in these ranges (note no zero issues here)
   {
     // Quick and dirty hack to get some scientific style numbers
     fsFloat64 numAbs = abs(fValue);
     fsFloat64 numExp = Utils::Math_LogAnyBase(10.0, numAbs);
-    fsFloat64 numDiv = pow(10.0, floor(numExp));
+              numExp = Utils::Math_RoundZero(numExp); // Round down (toward zero, still signed)
+    fsFloat64 numDiv = pow(10.0, numExp);
     fsFloat64 numMant = fValue / numDiv;
             
     total += fmtfp64(buffer, currlen, maxlen, numMant, 0, max, 0, false, false);                   // Mantissa (signed)
@@ -1151,7 +1158,8 @@ static int fmtfp64_exp(char *buffer, size_t *currlen, size_t maxlen, LDOUBLE fVa
   {
     fsFloat64 numAbs = abs(fValue);
     fsFloat64 numExp = Utils::Math_LogAnyBase(10.0, numAbs);
-    fsFloat64 numDiv = pow(10.0, floor(numExp));
+              numExp = Utils::Math_RoundZero(numExp); // Round down (toward zero, still signed)
+    fsFloat64 numDiv = pow(10.0, numExp);
     fsFloat64 numMant = fValue / numDiv;
 
     total += fmtfp64(buffer, currlen, maxlen, numMant, 0, max, 0);                   // Mantissa (signed)

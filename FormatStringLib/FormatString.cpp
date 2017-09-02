@@ -1050,12 +1050,13 @@ static int fmtfp_gen(char *buffer, size_t *currlen, size_t maxlen, LDOUBLE fValu
   {
     total += fmtint_64(buffer, currlen, maxlen, (fsInt64)fValue, 10, min, 0, flags); // NOTE: Don't use max or we will zero pad
   }
-  else if( fValue < 0.0000 || fValue > 9999.9999) // Only in these ranges (note no zero issues here)
+  else if( abs(fValue) < 0.00001 || abs(fValue) > 9999.9999) // Only in these ranges (note no zero issues here)
   {
     // Quick and dirty hack to get some scientific style numbers
     fsFloat64 numAbs = abs(fValue);
     fsFloat64 numExp = Utils::Math_LogAnyBase(10.0, numAbs);
-    fsFloat64 numDiv = pow(10.0, floor(numExp));
+              numExp = Utils::Math_RoundZero(numExp); // Round down (toward zero, still signed)
+    fsFloat64 numDiv = pow(10.0, numExp);
     fsFloat64 numMant = fValue / numDiv;
             
     total += fmtfp(buffer, currlen, maxlen, numMant, 0, max, 0, false, false);                   // Mantissa (signed)
@@ -1083,7 +1084,8 @@ static int fmtfp_exp(char *buffer, size_t *currlen, size_t maxlen, LDOUBLE fValu
   {
     fsFloat64 numAbs = abs(fValue);
     fsFloat64 numExp = Utils::Math_LogAnyBase(10.0, numAbs);
-    fsFloat64 numDiv = pow(10.0, floor(numExp));
+              numExp = Utils::Math_RoundZero(numExp); // Round down (toward zero, still signed)
+    fsFloat64 numDiv = pow(10.0, numExp);
     fsFloat64 numMant = fValue / numDiv;
 
     total += fmtfp(buffer, currlen, maxlen, numMant, 0, max, 0);                   // Mantissa (signed)
@@ -1305,12 +1307,13 @@ static int fmtfp64_gen(char *buffer, size_t *currlen, size_t maxlen, LDOUBLE fVa
   {
     total += fmtint_64(buffer, currlen, maxlen, (fsInt64)fValue, 10, min, 0, flags); // NOTE: Don't use max or we will zero pad
   }
-  else if( fValue < 0.0000 || fValue > 9999.9999) // Only in these ranges (note no zero issues here)
+  else if( abs(fValue) < 0.00001 || abs(fValue) > 9999.9999) // Only in these ranges (note no zero issues here)
   {
     // Quick and dirty hack to get some scientific style numbers
     fsFloat64 numAbs = abs(fValue);
     fsFloat64 numExp = Utils::Math_LogAnyBase(10.0, numAbs);
-    fsFloat64 numDiv = pow(10.0, floor(numExp));
+              numExp = Utils::Math_RoundZero(numExp); // Round down (toward zero, still signed)
+    fsFloat64 numDiv = pow(10.0, numExp);
     fsFloat64 numMant = fValue / numDiv;
             
     total += fmtfp64(buffer, currlen, maxlen, numMant, 0, max, 0, false, false);                   // Mantissa (signed)
@@ -1338,7 +1341,8 @@ static int fmtfp64_exp(char *buffer, size_t *currlen, size_t maxlen, LDOUBLE fVa
   {
     fsFloat64 numAbs = abs(fValue);
     fsFloat64 numExp = Utils::Math_LogAnyBase(10.0, numAbs);
-    fsFloat64 numDiv = pow(10.0, floor(numExp));
+              numExp = Utils::Math_RoundZero(numExp); // Round down (toward zero, still signed)
+    fsFloat64 numDiv = pow(10.0, numExp);
     fsFloat64 numMant = fValue / numDiv;
 
     total += fmtfp64(buffer, currlen, maxlen, numMant, 0, max, 0);                   // Mantissa (signed)
