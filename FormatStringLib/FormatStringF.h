@@ -31,10 +31,13 @@
 //  '+' - Plus sign
 //  '0' - Leading zeros
 //  '#' - Number (NOT implemented, currently ignored)
+//  ''' or ',' - Separator. Display numbers with thousands separator
 //
 // width : Optional minimum width of converted value, negative for left justification
+//  '*'    The width is specified as an additional integer argument preceding the argument to be formatted.
 //
 // precision : Optional maximum precision for fixed point or zero padded values
+//  '*'    The precision is specified as an additional integer argument preceding the argument to be formatted.
 //
 // Eg. FormatStringF(buffer, 512, "Count: %d value: %.3f", 34, 123.456789);
 //     output buffer contains: "Count: 34 value: 123.457"

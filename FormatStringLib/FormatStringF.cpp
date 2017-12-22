@@ -204,6 +204,7 @@ static int dopr(char *buffer, size_t maxlen, const char *format, ArgList& a_argL
         flags |= DP_F_ZERO;
         ch = *format++;
         break;
+     case '\'': // Most common syntax for sprintf with comma is singel quote
      case ',':
         flags |= DP_F_SEPARATORS;
         ch = *format++;
@@ -854,6 +855,9 @@ static int fmtfp_exception(char *buffer, size_t *currlen, size_t maxlen,
 
 static int fmtfp_gen(char *buffer, size_t *currlen, size_t maxlen, LDOUBLE fValue, int min, int max, int flags, bool a_checkFPException)
 {
+  // NOTE: Although the current behavior is okay, the actual spec says 'g' should return the shorter representation of 'f' and 'e' formats.
+  //       I notice the behavior is different though eg. %.2f, %.2e, %.2g when value is eg. 3.0041.
+
   int total = 0;
 
   if( a_checkFPException && isfpexception(fValue) ) // Check for FP exception
@@ -972,15 +976,16 @@ static int fmtfp(char *buffer, size_t *currlen, size_t maxlen,
   // multiplying by a factor of 10
   //
   
-  fracpart = round( (pow10(max)) * (ufvalue - intpart) );
+  LDOUBLE pow10Max = pow10(max);
+  fracpart = round( pow10Max * (ufvalue - intpart) );
 
-  if (fracpart >= pow10(max))
+  if (fracpart >= pow10Max)
   {
     intpart++;
-    fracpart -= (long)pow10(max);
+    fracpart -= (long)pow10Max;
   }
 
-  fracpart += (long)(pow10(max)); // Add leading '1' to allow leading zeros for fraction part
+  fracpart += (long)pow10Max; // Add leading '1' to allow leading zeros for fraction part
 
 #ifdef DEBUG_SNPRINTF
   dprint (1, (debugfile, "fmtfp: %f =? %d.%d\n", fvalue, intpart, fracpart));
@@ -1034,12 +1039,12 @@ static int fmtfp(char *buffer, size_t *currlen, size_t maxlen,
   if (fplace > 0) --fplace; // Rewind 1 char to remove the leading '1'
   fconvert[fplace] = 0;
 
-  //  -1 for decimal point if there are any, another -1 if we are printing a sign
-  padlen = min - iplace - max;
+  //  -1 for decimal point if there are any, another -1 if we are printing a sign 
+  padlen = min - iplace - max; 
   if( (max > 0) && (fplace > 0) ) // decimal point
     { padlen -= 1; }
   if( signvalue ) // sign
-    { padlen -= 1; } 
+    { padlen -= 1; }
 
 #if 1 // Configurable trailing zeros for general numbers
   if( a_allowTrailingZeros )
@@ -1054,7 +1059,7 @@ static int fmtfp(char *buffer, size_t *currlen, size_t maxlen,
   if (padlen < 0) 
     padlen = 0;
   if (flags & DP_F_MINUS) 
-    padlen = -padlen; // Left Justify 
+    padlen = -padlen; // Left Justify
 
   if ((flags & DP_F_ZERO) && (padlen > 0)) 
   {
@@ -1222,8 +1227,8 @@ static int fmtfp64(char *buffer, size_t *currlen, size_t maxlen,
   intpart = (fsInt64)ufvalue;
 
   // 
-  // Sorry, we only support 16 digits past the decimal because of our 
-  // conversion method
+  // Sorry, we only support 16 digits past the decimal because of our conversion method
+  // So 1.0000000000000003e-01 won't be preserved. It will round to "0.1" instead of "0.10000000000000003"
   //
   if (max > 16)
     max = 16;
@@ -1231,15 +1236,16 @@ static int fmtfp64(char *buffer, size_t *currlen, size_t maxlen,
   // We "cheat" by converting the fractional part to integer by
   // multiplying by a factor of 10
   //
-  fracpart = round64( (pow10(max)) * (ufvalue - intpart) );
+  LDOUBLE pow10Max = pow10(max);
+  fracpart = round64( pow10Max * (ufvalue - intpart) );
 
-  if (fracpart >= pow10(max))
+  if (fracpart >= pow10Max)
   {
     intpart++;
-    fracpart -= (fsInt64)pow10(max);
+    fracpart -= (fsInt64)pow10Max;
   }
 
-  fracpart += (fsInt64)(pow10(max)); // Add leading '1' to allow leading zeros for fraction part
+  fracpart += (fsInt64)pow10Max; // Add leading '1' to allow leading zeros for fraction part
 
 #ifdef DEBUG_SNPRINTF
   dprint (1, (debugfile, "fmtfp: %f =? %d.%d\n", fvalue, intpart, fracpart));
@@ -1298,7 +1304,7 @@ static int fmtfp64(char *buffer, size_t *currlen, size_t maxlen,
   if( (max > 0) && (fplace > 0) ) // decimal point
     { padlen -= 1; }
   if( signvalue ) // sign
-    { padlen -= 1; } 
+    { padlen -= 1; }
 
 #if 1 // Configurable trailing zeros for general numbers
   if( a_allowTrailingZeros )

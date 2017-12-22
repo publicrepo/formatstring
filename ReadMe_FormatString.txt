@@ -32,3 +32,8 @@ Fix %.2g incorrect output.
 
 12 May 2016
 Fix %2.0f incorrect padding with zero decimal places.
+
+22 Dec 2017
+Preserve precision
+Support common comma flag
+Add .gitignore  
